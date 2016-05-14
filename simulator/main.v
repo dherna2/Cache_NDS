@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module text_read_write;
-  reg [7:0] mem [0:4];
+  reg [31:0] mem [0:4];
   integer m,i;
 
   initial

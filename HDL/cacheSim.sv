@@ -13,7 +13,7 @@ module cacheSim
 #(	// parameters
 	parameter u32 SETS = 1028,	 	// assuming this is sets per way
 	parameter u32 ASSOC = 2,
-	parameter u32 LINESIZE = 128,	// in bits
+	parameter u32 LINESIZE = 16,	// in bytes
 	parameter u16 ADDRESS_SIZE = 16
 )
 (	// ports
@@ -22,7 +22,7 @@ module cacheSim
 );
 
 	// Determining our address bits variables
-	localparam u16 bsWidth = $clog2( LINESIZE >> 3 );				// Byteselect Width (number of bits)
+	localparam u16 bsWidth = $clog2( LINESIZE );				// Byteselect Width (number of bits)
 	localparam u16 indexWidth = $clog2( SETS );						// Index Width
 	localparam u16 tagWidth = ADDRESS_SIZE - bsWidth - indexWidth;	// Tag Width
 	localparam u16 assocWidth = $clog2( ASSOC );					// Associativity Width
@@ -46,11 +46,11 @@ module cacheSim
 	u32 t3[$];
 	u32 temp_LRU_index[$];
 	u32 temp_LRU_set[$];
-	reg [assocWidth:1] LRU_set;
-	u32 LRU_address;
+	reg [assocWidth:0] LRU_set, i_LRU_set;
+	u32 LRU_address, i_LRU_address;
 	u32 LRU_queue[$];
 	u32 LRU_update[$];
-	reg LRU_dirty, LRU_evict;
+	reg LRU_dirty, LRU_evict, invalid_flag;
 	
 	// Our Cache Model
 	// There are two extra bits for valid and dirty bits, which are the two lsb's: {tag, dirty, valid}
@@ -119,15 +119,25 @@ module cacheSim
 				
 					cMisses <= cMisses + 1'b1;
 					
-					if(LRU_evict === 1'b1)
+					if(invalid_flag === 1'b1) begin
+					
+						// Write new "data" (only writing the tag, dirty, and valid bits)
+						cache[i_LRU_set][cache_index] <= {cache_tag, 1'b0, 1'b1};
+					
+					end
+					
+					else begin
+					
 						numEvictions <= numEvictions + 1;
 						
-					if(LRU_dirty === 1'b1)
-						numWritebacks <= numWritebacks + 1;
-						
-					// Write new "data" (only writing the tag, dirty, and valid bits)
-					cache[LRU_set][cache_index] <= {cache_tag, 1'b0, 1'b1};
+						if(LRU_dirty === 1'b1)
+							numWritebacks <= numWritebacks + 1;
+							
+						// Write new "data" (only writing the tag, dirty, and valid bits)
+						cache[LRU_set][cache_index] <= {cache_tag, 1'b0, 1'b1};
 					
+					end
+						
 					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
 				
 				end
@@ -144,8 +154,7 @@ module cacheSim
 				
 					cHits <= cHits + 1'b1;
 					
-					if(LRU_evict === 1'b1)
-						LRU_queue.delete(LRU_update[$]);				// delete the old location
+					LRU_queue.delete(LRU_update[$]);								// delete the old location
 					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
 				
 					// Write new "data" (only writing the tag, dirty, and valid bits)
@@ -158,14 +167,24 @@ module cacheSim
 				
 					cMisses <= cMisses + 1'b1;
 					
-					if(LRU_evict === 1'b1)
+					if(invalid_flag === 1'b1) begin
+					
+						// Write new "data" (only writing the tag, dirty, and valid bits)
+						cache[i_LRU_set][cache_index] <= {cache_tag, 1'b1, 1'b1};
+					
+					end
+					
+					else begin
+					
 						numEvictions <= numEvictions + 1;
 						
-					if(LRU_dirty === 1'b1)
-						numWritebacks <= numWritebacks + 1;
-						
-					// Write new "data" (only writing the tag, dirty, and valid bits)
-					cache[LRU_set][cache_index] <= {cache_tag, 1'b1, 1'b1};
+						if(LRU_dirty === 1'b1)
+							numWritebacks <= numWritebacks + 1;
+							
+						// Write new "data" (only writing the tag, dirty, and valid bits)
+						cache[LRU_set][cache_index] <= {cache_tag, 1'b1, 1'b1};
+					
+					end
 					
 					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
 					
@@ -186,11 +205,16 @@ module cacheSim
 		temp_LRU_set = {};
 		LRU_dirty = 1'b0;
 		LRU_evict = 1'b0;
+		invalid_flag = 1'b0;
+		i_LRU_set = '0;
+		i_LRU_address = '0;
+		LRU_set = '0;
+		LRU_address = '0;
 		
 		if(rw === 1'b0) begin // READ
 		
 			// Look through all associative ways
-			foreach (cache[i]) begin
+			for(int i = ASSOC; i >= 1; i--) begin
 			
 				// go to cache i, index from address, and read the tag
 				// also check validity
@@ -209,9 +233,9 @@ module cacheSim
 					// If invalid, we want to load data in here
 					if (cache[i][cache_index][1] === 1'b0) begin
 						
-						//LRU_set = temp_LRU_set[i];	// Save the set number
-						LRU_set = i;					// Save the set number
-						LRU_address = {cache[i][cache_index][(tagWidth + 2):3], cache_index};
+						invalid_flag = 1'b1;
+						i_LRU_set = i;					// Save the set number
+						i_LRU_address = {cache[i][cache_index][(tagWidth + 2):3], cache_index};
 						
 					end
 					
@@ -237,19 +261,20 @@ module cacheSim
 		else begin // WRITE
 		
 			// Look through all associative ways
-			foreach (cache[i]) begin
+			for(int i = ASSOC; i >= 1; i--) begin
 			
 				// go to cache i, index from address, and read the tag
-				if( cache[i] [cache_index][(tagWidth + 2):3] !== cache_tag && cache[i][cache_index][1] === 1'b1) begin
+				if( cache[i] [cache_index][(tagWidth + 2):3] !== cache_tag ) begin
 					
-					// If there is no tag match and the data is valid, the write is a miss
+					// If there is no tag match, the write is a miss
 					temp_hit[i] = 1'b0;
 					
 					// If invalid, we want to write data to here
 					if (cache[i] [cache_index] [ 1 ] === 1'b0) begin
 						
-						LRU_set = temp_LRU_set[i];	// Save the set number
-						LRU_address = {cache[i][cache_index][(tagWidth + 2):3], cache_index};
+						invalid_flag = 1'b1;
+						i_LRU_set = i;	// Save the set number
+						i_LRU_address = {cache[i][cache_index][(tagWidth + 2):3], cache_index};
 						
 					end
 					

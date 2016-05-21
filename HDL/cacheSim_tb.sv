@@ -26,7 +26,7 @@ module cacheSim_tb
 	cacheSim #(
 		.SETS(16),
 		.ASSOC(2),
-		.LINESIZE(128),
+		.LINESIZE(16),
 		.ADDRESS_SIZE(ADDRESS_SIZE)
 	)
 	C1 (.*);
@@ -63,6 +63,12 @@ module cacheSim_tb
 			// Debug - make sure that index and tag are correct (check vs. HW3 #5)
 			$fwrite(out, "index: %h\n", C1.cache_index);
 			$fwrite(out, "tag: %h\n", C1.cache_tag);
+			$fwrite(out, "LRU Address: %h\n", C1.LRU_address);
+			$fwrite(out, "iLRU Address: %h\n", C1.i_LRU_address);
+			$fwrite(out, "LRU Set: %h\n", C1.LRU_set);
+			$fwrite(out, "iLRU Set: %h\n", C1.i_LRU_set);
+			$fwrite(out, "cache[2]: %h\n", C1.cache[2][C1.cache_index][C1.tagWidth+2:3]);
+			$fwrite(out, "cache[1]: %h\n", C1.cache[1][C1.cache_index][C1.tagWidth+2:3]);
 			
 			// Record the results - moved this block here for debug
 			$fwrite(out, "Number of Accesses: %0d\n", C1.cAccesses);

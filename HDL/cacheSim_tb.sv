@@ -63,11 +63,16 @@ module cacheSim_tb
 			// Debug - make sure that index and tag are correct (check vs. HW3 #5)
 			$fwrite(out, "index: %h\n", C1.cache_index);
 			$fwrite(out, "tag: %h\n", C1.cache_tag);
+			$fwrite(out, "invalid flag: %h\n", C1.invalid_flag);
 			$fwrite(out, "LRU Address: %h\n", C1.LRU_address);
 			$fwrite(out, "iLRU Address: %h\n", C1.i_LRU_address);
 			$fwrite(out, "LRU Set: %h\n", C1.LRU_set);
 			$fwrite(out, "iLRU Set: %h\n", C1.i_LRU_set);
-			$fwrite(out, "cache[2]: %h\n", C1.cache[2][C1.cache_index][C1.tagWidth+2:3]);
+			$fwrite(out, "LRU Evict: %h\n", C1.LRU_evict[$]);
+			$fwrite(out, "Queue contains:");
+			for (int i = 0; i < C1.LRU_queue.size(); i++)
+				$fwrite (out, " %h", C1.LRU_queue[i]);
+			$fwrite(out, "\ncache[2]: %h\n", C1.cache[2][C1.cache_index][C1.tagWidth+2:3]);
 			$fwrite(out, "cache[1]: %h\n", C1.cache[1][C1.cache_index][C1.tagWidth+2:3]);
 			
 			// Record the results - moved this block here for debug

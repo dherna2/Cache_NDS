@@ -50,7 +50,8 @@ module cacheSim
 	u32 LRU_address, i_LRU_address;
 	u32 LRU_queue[$];
 	u32 LRU_update[$];
-	reg LRU_dirty, LRU_evict, invalid_flag;
+	reg LRU_dirty, invalid_flag;
+	u32 LRU_evict[$];
 	
 	// Our Cache Model
 	// There are two extra bits for valid and dirty bits, which are the two lsb's: {tag, dirty, valid}
@@ -110,7 +111,7 @@ module cacheSim
 				
 					cHits <= cHits + 1'b1;
 					LRU_queue.delete(LRU_update[$]);					// pop out the old location
-					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
+					LRU_queue.push_front(address[ADDRESS_SIZE-1:bsWidth]);	// put this address at the most recently used
 				
 				end
 				
@@ -130,6 +131,8 @@ module cacheSim
 					
 						numEvictions <= numEvictions + 1;
 						
+						LRU_queue.delete(LRU_evict[$]);		// delete evicted address from LRU queue
+						
 						if(LRU_dirty === 1'b1)
 							numWritebacks <= numWritebacks + 1;
 							
@@ -138,7 +141,7 @@ module cacheSim
 					
 					end
 						
-					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
+					LRU_queue.push_front(address[ADDRESS_SIZE-1:bsWidth]);	// put this address at the most recently used
 				
 				end
 				
@@ -154,11 +157,8 @@ module cacheSim
 				
 					cHits <= cHits + 1'b1;
 					
-					LRU_queue.delete(LRU_update[$]);								// delete the old location
-					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
-				
-					// Write new "data" (only writing the tag, dirty, and valid bits)
-					cache[LRU_set][cache_index] <= {cache_tag, 1'b1, 1'b1};
+					LRU_queue.delete(LRU_update[$]);							// delete the old location
+					LRU_queue.push_front(address[ADDRESS_SIZE-1:bsWidth]);		// put this address at the most recently used
 				
 				end
 				
@@ -178,6 +178,8 @@ module cacheSim
 					
 						numEvictions <= numEvictions + 1;
 						
+						LRU_queue.delete(LRU_evict[$]);		// delete evicted address from LRU queue
+						
 						if(LRU_dirty === 1'b1)
 							numWritebacks <= numWritebacks + 1;
 							
@@ -186,7 +188,7 @@ module cacheSim
 					
 					end
 					
-					LRU_queue <= {address[ADDRESS_SIZE-1:(bsWidth-1)], LRU_queue};	// put this address at the most recently used
+					LRU_queue.push_front(address[ADDRESS_SIZE-1:bsWidth]);	// put this address at the most recently used
 					
 				end
 				
@@ -204,7 +206,6 @@ module cacheSim
 		temp_LRU_index = {};
 		temp_LRU_set = {};
 		LRU_dirty = 1'b0;
-		LRU_evict = 1'b0;
 		invalid_flag = 1'b0;
 		i_LRU_set = '0;
 		i_LRU_address = '0;
@@ -214,7 +215,7 @@ module cacheSim
 		if(rw === 1'b0) begin // READ
 		
 			// Look through all associative ways
-			for(int i = ASSOC; i >= 1; i--) begin
+			for(int i = 1; i <= ASSOC; i++) begin
 			
 				// go to cache i, index from address, and read the tag
 				// also check validity
@@ -222,7 +223,7 @@ module cacheSim
 					
 					// If tag matches and data is valid, the read is a hit
 					temp_hit[i] = 1'b1;
-					LRU_update = unsigned'(LRU_queue.find_first_index with (item == address[ADDRESS_SIZE-1:(bsWidth-1)]));
+					LRU_update = unsigned'(LRU_queue.find_first_index with (item == address[ADDRESS_SIZE-1:bsWidth]));
 					
 				end
 				
@@ -242,11 +243,11 @@ module cacheSim
 					else begin  // Valid data that may need to be evicted
 					
 						// Save this index for comparison in our LRU later
-						t1 = unsigned'(LRU_queue.find_last_index with (item == address[ADDRESS_SIZE-1:(bsWidth-1)]));
+						t1 = unsigned'(LRU_queue.find_last_index with (item == {cache[i][cache_index][(tagWidth + 2):3], cache_index}));
 						if ($size(t1) !== 0) begin
 						
-							temp_LRU_index = {t1, temp_LRU_index};
-							temp_LRU_set = {i, temp_LRU_set};
+							temp_LRU_index.push_front(t1[$]);
+							temp_LRU_set.push_front(i);
 						
 						end
 					
@@ -261,7 +262,7 @@ module cacheSim
 		else begin // WRITE
 		
 			// Look through all associative ways
-			for(int i = ASSOC; i >= 1; i--) begin
+			for(int i = 1; i <= ASSOC; i++) begin
 			
 				// go to cache i, index from address, and read the tag
 				if( cache[i] [cache_index][(tagWidth + 2):3] !== cache_tag ) begin
@@ -281,11 +282,11 @@ module cacheSim
 					else begin // Valid data that may need to be evicted
 					
 						// Save this index for comparison in our LRU later
-						t1 = unsigned'(LRU_queue.find_last_index with (item == address[ADDRESS_SIZE-1:(bsWidth-1)]));
+						t1 = unsigned'(LRU_queue.find_last_index with (item == {cache[i][cache_index][(tagWidth + 2):3], cache_index}));
 						if ($size(t1) !== 0) begin
 						
-							temp_LRU_index = {t1, temp_LRU_index};
-							temp_LRU_set = {i, temp_LRU_set};
+							temp_LRU_index.push_front(t1[$]);
+							temp_LRU_set.push_front(i);
 						
 						end
 					
@@ -297,7 +298,7 @@ module cacheSim
 				
 					temp_hit[i] = 1'b1;
 					
-					LRU_update = unsigned'(LRU_queue.find_first_index with (item == address[ADDRESS_SIZE-1:(bsWidth-1)]));
+					LRU_update = unsigned'(LRU_queue.find_first_index with (item == address[ADDRESS_SIZE-1:bsWidth]));
 					
 				end
 				
@@ -313,7 +314,7 @@ module cacheSim
 			LRU_set = temp_LRU_set[t3[$]];								//   as well as the set number
 			LRU_address = {cache[LRU_set][cache_index][(tagWidth + 2):3], cache_index};
 			LRU_dirty = cache[LRU_set][cache_index][2];
-			LRU_evict = cache[LRU_set][cache_index][1];
+			LRU_evict = unsigned'(LRU_queue.find_first_index with (item == LRU_address));
 
 		end
 		

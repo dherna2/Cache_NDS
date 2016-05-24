@@ -1,7 +1,18 @@
 // Stephen Weston
+// David H.
+// Naser Alshami
+// Waleed Alhaddad
 // 5/12/2016
-// ECE 585
+// ECE 585, Spring 2016
 // Final Project
+
+/*
+>> TODO: Add a module description
+>> 
+>> 
+>> 
+>> 
+*/ 
 
 typedef shortint unsigned u16;
 typedef int unsigned u32;
@@ -219,7 +230,7 @@ module cacheSim
 			
 				// go to cache i, index from address, and read the tag
 				// also check validity
-				if( cache[i] [cache_index][(tagWidth + 2): 3] === cache_tag && cache[i][cache_index][i] === 1'b1) begin
+				if( cache[i] [cache_index][(tagWidth + 2): 3] === cache_tag && cache[i][cache_index][1] === 1'b1) begin
 					
 					// If tag matches and data is valid, the read is a hit
 					temp_hit[i] = 1'b1;
@@ -232,7 +243,7 @@ module cacheSim
 					temp_hit[i] = 1'b0;
 					
 					// If invalid, we want to load data in here
-					if (cache[i][cache_index][i] === 1'b0) begin
+					if (cache[i][cache_index][1] === 1'b0) begin
 						
 						invalid_flag = 1'b1;
 						i_LRU_set = i;					// Save the set number

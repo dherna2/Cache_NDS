@@ -1,3 +1,7 @@
+Bug of address all 0 breaks program.
+
 test_traces.txt - See solutions for HW3 - first 2 digits=tag, 3rd digit= index - 3rd,5th,9th access are hits, 10th access evicts 3220
 
 test_traces32.txt - 8-way, all have same index of 1e0 and first 4 digits is tag, 7th access is a Hit, 9th access is last stored in Queue, 10th access evicts 00A53C00, 11th access evicts 36213c00
+
+test_traces_D64x8_set45c.txt - 32bit addr - 64 bytes offset/linesize, 1024 sets, 8-way, most have same index of 45c and first 4 digits is tag, 8th access is a Hit, 10th access is last stored in Queue, 11th access evicts 00A53C00, 12th access is to new set, 

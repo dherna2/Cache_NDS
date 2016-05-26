@@ -82,16 +82,16 @@ module cacheSim_tb
 				$fwrite(out, "index: %h\n", C1.cache_index);
 				$fwrite(out, "tag: %h\n", C1.cache_tag);
 				$fwrite(out, "invalid flag: %h\n", C1.invalid_flag);
-				$fwrite(out, "LRU Address: %h\n", C1.LRU_address);
+				$fwrite(out, "Queue contains:");
+				for (int i = 0; i < C1.LRU_queue.size(); i++)
+					$fwrite (out, " %h", C1.LRU_queue[i]);
+				$fwrite(out, "\nLRU Address: %h\n", C1.LRU_address);
 				$fwrite(out, "iLRU Address: %h\n", C1.i_LRU_address);
 				$fwrite(out, "LRU Set: %h\n", C1.LRU_set);
 				$fwrite(out, "iLRU Set: %h\n", C1.i_LRU_set);
 				$fwrite(out, "LRU Evict: %h\n", C1.LRU_evict[$]);
-				$fwrite(out, "Queue contains:");
-				for (int i = 0; i < C1.LRU_queue.size(); i++)
-					$fwrite (out, " %h", C1.LRU_queue[i]);
-				$fwrite(out, "\ncache[2]: %h\n", C1.cache[2][C1.cache_index][C1.tagWidth+2:3]);
-				$fwrite(out, "cache[1]: %h\n", C1.cache[1][C1.cache_index][C1.tagWidth+2:3]);
+				for (int i = 1; i <= (2**C1.assocWidth); i++)
+					$fwrite(out, "cache[%0d]: %h\n",i,C1.cache[i][C1.cache_index][C1.tagWidth+2:3]);
 				
 				// Record the results - moved this block here for debug
 				$fwrite(out, "Number of Accesses: %0d\n", C1.cAccesses);

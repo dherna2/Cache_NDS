@@ -66,7 +66,7 @@ module cacheSim
 	
 	// Our Cache Model
 	// There are two extra bits for valid and dirty bits, which are the two lsb's: {tag, dirty, valid}
-	typedef reg [(tagWidth + 2):1] singlecache [SETS:1];
+	typedef reg [(tagWidth + 2):1] singlecache [SETS-1:0];
 	
 	// Create more for all the "ways"
 	singlecache cache[ASSOC:1];

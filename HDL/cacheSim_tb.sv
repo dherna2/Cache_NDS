@@ -25,6 +25,9 @@ typedef real double;
 
 module cacheSim_tb
 #(
+	parameter u32 SETS = 16,	 	// assuming this is sets per way
+	parameter u32 ASSOC = 2,
+	parameter u32 LINESIZE = 16,	// in bytes
 	parameter u16 ADDRESS_SIZE = 16
 )
 (	// ports
@@ -38,9 +41,9 @@ module cacheSim_tb
 
 	// DUT Instantiation
 	cacheSim #(
-		.SETS(16),
-		.ASSOC(2),
-		.LINESIZE(16),
+		.SETS(SETS),
+		.ASSOC(ASSOC),
+		.LINESIZE(LINESIZE),
 		.ADDRESS_SIZE(ADDRESS_SIZE)
 	)
 	C1 (.*);
@@ -90,7 +93,7 @@ module cacheSim_tb
 				$fwrite(out, "LRU Set: %h\n", C1.LRU_set);
 				$fwrite(out, "iLRU Set: %h\n", C1.i_LRU_set);
 				$fwrite(out, "LRU Evict: %h\n", C1.LRU_evict[$]);
-				for (int i = 1; i <= (2**C1.assocWidth); i++)
+				for (int i = 1; i <= ASSOC; i++)
 					$fwrite(out, "cache[%0d]: %h\n",i,C1.cache[i][C1.cache_index][C1.tagWidth+2:3]);
 				
 				// Record the results - moved this block here for debug

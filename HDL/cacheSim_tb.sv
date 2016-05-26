@@ -63,7 +63,7 @@ module cacheSim_tb
 		`ifdef DEBUG
 			$fwrite(out, "bswidth: %0d\n", C1.bsWidth);
 			$fwrite(out, "indexwidth: %0d\n", C1.indexWidth);
-			$fwrite(out, "tagwidth: %0d\n", C1.tagWidth);
+			$fwrite(out, "tagwidth: %0d\n\n", C1.tagWidth);
 		`endif
 		
 		// Begin testing...
@@ -78,6 +78,7 @@ module cacheSim_tb
 			
 			// Debug - make sure that important variables are correct
 			`ifdef DEBUG
+				$fwrite(out, "Address: %h\n", address);
 				$fwrite(out, "index: %h\n", C1.cache_index);
 				$fwrite(out, "tag: %h\n", C1.cache_tag);
 				$fwrite(out, "invalid flag: %h\n", C1.invalid_flag);

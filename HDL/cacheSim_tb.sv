@@ -15,7 +15,7 @@
 */ 
 
 // Comment this out to disable debug mode
-`define DEBUG 1
+//`define DEBUG 1
 
 typedef shortint unsigned u16;
 typedef int unsigned u32;
@@ -25,10 +25,10 @@ typedef real double;
 
 module cacheSim_tb
 #(
-	parameter u32 SETS = 16,	 	// assuming this is sets per way
-	parameter u32 ASSOC = 2,
-	parameter u32 LINESIZE = 16,	// in bytes
-	parameter u16 ADDRESS_SIZE = 16
+	parameter u32 SETS = 256, 	// assuming this is sets per way
+	parameter u32 ASSOC = 1,
+	parameter u32 LINESIZE = 64,	// in bytes
+	parameter u16 ADDRESS_SIZE = 32
 )
 (	// ports
 	output reg rw, clk, reset,
@@ -111,18 +111,25 @@ module cacheSim_tb
 		end
 		
 		@(negedge clk);
-		/*
-		// Record the results
-		$fwrite(out, "Number of Accesses: %0d\n", C1.cAccesses);
-		$fwrite(out, "Number of Reads: %0d\n", C1.cReads);
-		$fwrite(out, "Number of Writes: %0d\n", C1.cWrites);
-		$fwrite(out, "Number of Hits: %0d\n", C1.cHits);
-		$fwrite(out, "Number of Misses: %0d\n", C1.cMisses);
-		$fwrite(out, "Number of Evictions: %0d\n", C1.numEvictions);
-		$fwrite(out, "Number of Writebacks: %0d\n", C1.numWritebacks);
-		$fwrite(out, "Hit Ratio: %.2f%%\n", C1.hitRatio);
-		$fwrite(out, "Miss Ratio: %.2f%%\n\n", C1.missRatio);
-		*/
+		
+		`ifndef DEBUG
+			// Record the results
+			$fwrite(out, "Cache Size: %0d bytes\n", ASSOC * SETS * LINESIZE);
+			$fwrite(out, "Associativity: %0d\n", ASSOC);
+			$fwrite(out, "Sets per way: %0d\n", SETS);
+			$fwrite(out, "Line Size: %0d bytes\n", LINESIZE);
+			
+			$fwrite(out, "Number of Accesses: %0d\n", C1.cAccesses);
+			$fwrite(out, "Number of Reads: %0d\n", C1.cReads);
+			$fwrite(out, "Number of Writes: %0d\n", C1.cWrites);
+			$fwrite(out, "Number of Hits: %0d\n", C1.cHits);
+			$fwrite(out, "Number of Misses: %0d\n", C1.cMisses);
+			$fwrite(out, "Number of Evictions: %0d\n", C1.numEvictions);
+			$fwrite(out, "Number of Writebacks: %0d\n", C1.numWritebacks);
+			$fwrite(out, "Hit Ratio: %.2f%%\n", C1.hitRatio);
+			$fwrite(out, "Miss Ratio: %.2f%%\n\n", C1.missRatio);
+		`endif
+		
 		$fclose(in);
 		$fclose(out);
 		$finish;

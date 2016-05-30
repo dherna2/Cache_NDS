@@ -78,11 +78,11 @@ module cacheSim
 	// error check the parameters
 	initial begin
 	
-		if(SETS < 1 || SETS > 2**28 || SETS % 2 != 0)
+		if(SETS < 2 || SETS > 2**28 || SETS % 2 != 0)
 			$fatal("The SETS parameter is incorrect. Please choose a value between 2 and 2**28 that is a multiple of 2.\n");
 			
-		if(ASSOC < 2 || ASSOC % 2 != 0)
-			$fatal("The ASSOC parameter is incorrect. Please choose a value that is a multiple of 2.\n");
+		if(ASSOC != 1 && ASSOC % 2 != 0)
+			$fatal("The ASSOC parameter is incorrect. Please choose a value that is a multiple of 2, or 1.\n");
 
 		if(LINESIZE < 8 || LINESIZE > 128 || LINESIZE % 2 != 0)
 			$fatal("The LINESIZE parameter is incorrect. Please choose a value between 8 and 128 that is a multiple of 2.\n");			

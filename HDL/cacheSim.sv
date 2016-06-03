@@ -7,11 +7,11 @@
 // Final Project
 
 /*
->> TODO: Add a module description
->> 
->> 
->> 
->> 
+>> This is the cache simulator module. This module is strictly for simulation,
+>>  NOT synthesis. The module keeps track of number of accesses, number of reads,
+>>  number of writes, number of hits, number of misses, number of evictions,
+>>  number of writebacks, and ratios for hits and misses. Adjustable parameters include
+>>  address size, number of sets per way, number of ways, and set size in bytes.
 */ 
 
 typedef shortint unsigned u16;
@@ -78,13 +78,13 @@ module cacheSim
 	// error check the parameters
 	initial begin
 	
-		if(SETS < 2 || SETS > 2**28 || SETS % 2 != 0)
+		if(SETS < 2 || SETS > 2**25 || SETS % 2 != 0)
 			$fatal("The SETS parameter is incorrect. Please choose a value between 2 and 2**28 that is a multiple of 2.\n");
 			
-		if(ASSOC != 1 && ASSOC % 2 != 0)
-			$fatal("The ASSOC parameter is incorrect. Please choose a value that is a multiple of 2, or 1.\n");
+		if(ASSOC < 1 || ASSOC > 8)
+			$fatal("The ASSOC parameter is incorrect. Please choose a value that is between 1 and 8.\n");
 
-		if(LINESIZE < 8 || LINESIZE > 128 || LINESIZE % 2 != 0)
+		if(LINESIZE < 32 || LINESIZE > 128 || LINESIZE % 2 != 0)
 			$fatal("The LINESIZE parameter is incorrect. Please choose a value between 8 and 128 that is a multiple of 2.\n");			
 		
 	end
@@ -230,7 +230,7 @@ module cacheSim
 			
 				// go to cache i, index from address, and read the tag
 				// also check validity
-				if( cache[i] [cache_index][(tagWidth + 2): 3] === cache_tag && cache[i][cache_index][1] === 1'b1) begin
+				if( cache[i][cache_index][(tagWidth + 2): 3] === cache_tag && cache[i][cache_index][1] === 1'b1) begin
 					
 					// If tag matches and data is valid, the read is a hit
 					temp_hit[i] = 1'b1;
